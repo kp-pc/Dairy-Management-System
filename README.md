@@ -31,6 +31,7 @@ bill.php               # Billing backend
 bill.html              # Billing UI
 connect.php            # DB connection & example insert (update for your env)
 connection.php         # another DB/connection file (check duplication)
+connect_secure.php     # New: secure PDO-based connection & prepared-insert example
 css/                   # styles and client-side assets (bootstrap, custom CSS, jquery)
 dry.sql                # Database schema + seed data
 fpdf/                  # FPDF library used for PDF export
@@ -121,9 +122,18 @@ $dbname   = "dry";
 $conn = new mysqli($servername, $username, $password, $dbname);
 ```
 
-Notes:
-- The docker-compose file uses simple default passwords for local development; change them before sharing or using in any networked environment.
-- The web service mounts the project directory into the container for live code editing during development.
+## Configuration (new)
+You can store environment variables in a `.env` file (not committed). See `.env.example` for the expected variables.
+
+Example `.env` values (copy `.env.example` to `.env` and update):
+```
+DB_HOST=localhost
+DB_DATABASE=dry
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Recommended secure connection example: see `connect_secure.php` which uses PDO and prepared statements. It will read from the environment variables above.
 
 ## Sample screenshots
 (The images below are embedded from the repository and will render on GitHub.)
@@ -154,10 +164,10 @@ More visual assets are available in `images/` (product photos, logos, gallery im
 
 ## Important notes & recommended improvements
 - Security: Many DB calls use interpolated variables (vulnerable to SQL injection).
-  - Recommendation: migrate DB calls to PDO or mysqli prepared statements.
+  - Recommendation: migrate DB calls to PDO or mysqli prepared statements (see `connect_secure.php`).
   - Do not commit real credentials; consider using a `.env` file and add it to `.gitignore`.
 - Authentication: Use password hashing (password_hash / password_verify) and session hardening.
-- Consolidate DB code: there are multiple connection files (`connect.php`, `connection.php`) — standardize on one.
+- Consolidate DB code: there are multiple connection files (`connect.php`, `connection.php`) — standardize on one and consider replacing `connect.php` with `connect_secure.php` after review.
 - Optimize large images: `images/` contains very large files; consider optimizing or using Git LFS.
 
 ## Contributing
@@ -179,10 +189,10 @@ error_reporting(E_ALL);
 ```
 
 ## License & attribution
-- The repository currently has no LICENSE file. Add a LICENSE (e.g., MIT) if you want to permit reuse.
+- This repository is licensed under the MIT License — see `LICENSE` for details.
 - FPDF is bundled under its license in `fpdf/license.txt`. Respect that license for distribution.
 
 If you want, I can:
-- add a short Docker section to README.md with exact commands and notes (done),
-- convert one example (e.g., the farmer insert in `connect.php`) to use prepared statements and commit it as a proof-of-concept,
-- or both. Tell me which and I will proceed.
+- convert other DB calls to prepared statements and open a PR on a feature branch,
+- add an automated lint or simple static analysis step,
+- or help shrink large images and add Git LFS if desired.
