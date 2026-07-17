@@ -46,7 +46,7 @@ How it fits together:
 - Module pages (farmer.php, staff.php, Animalinfo.php, Dairypro.php, etc.) implement CRUD using PHP + MySQL, often via `connect.php`.
 - Billing uses daily entries and can generate PDFs via `fpdf/`.
 
-## Quick start — run locally
+## Quick start — run locally (without Docker)
 
 1. Prerequisites
    - PHP 7.2+ (or PHP 8.x)
@@ -74,6 +74,56 @@ mysql -u root -p dry < dry.sql
 php -S localhost:8000
 # then open http://localhost:8000/startpage.php
 ```
+
+## Quick start — run with Docker (recommended for reproducible dev)
+
+I added a Dockerfile and docker-compose.yml to run a PHP + MySQL stack with phpMyAdmin for convenience.
+
+1. Ensure Docker and Docker Compose are installed.
+
+2. From the project root, start the stack:
+```bash
+docker-compose up -d --build
+```
+
+3. Services exposed by default:
+- Web app: http://localhost:8000/startpage.php
+- phpMyAdmin: http://localhost:8080 (login: root / rootpassword)
+- MySQL: container `db` (3306)
+
+4. Import the schema into the running MySQL container (two options):
+
+Option A — single command (recommended):
+```bash
+# Run from project root
+docker exec -i $(docker-compose ps -q db) mysql -u root -prootpassword dry < dry.sql
+```
+
+Option B — copy then source inside the container:
+```bash
+docker cp dry.sql $(docker-compose ps -q db):/tmp/dry.sql
+docker-compose exec db mysql -u root -prootpassword dry -e "source /tmp/dry.sql"
+```
+
+5. Update application DB credentials (connect.php / connection.php)
+- When running with docker-compose the DB host is `db` (not `localhost`). The default credentials in docker-compose.yml are:
+  - MYSQL_ROOT_PASSWORD=rootpassword
+  - MYSQL_DATABASE=dry
+  - MYSQL_USER=dairyuser
+  - MYSQL_PASSWORD=dairy_pass
+
+Example connect.php snippet for Docker:
+```php
+$servername = "db";         // container name from docker-compose
+$username = "dairyuser";
+$password = "dairy_pass";
+$dbname   = "dry";
+$conn = new mysqli($servername, $username, $password, $dbname);
+```
+
+Notes:
+- The docker-compose file uses simple default passwords for local development; change them before sharing or using in any networked environment.
+- The web service mounts the project directory into the container for live code editing during development.
 
 ## Sample screenshots
 (The images below are embedded from the repository and will render on GitHub.)
@@ -133,6 +183,6 @@ error_reporting(E_ALL);
 - FPDF is bundled under its license in `fpdf/license.txt`. Respect that license for distribution.
 
 If you want, I can:
-- commit this README.md to the repository for you,
-- add a small docker-compose.yml (PHP + MySQL) to simplify running the app,
-- or open a PR that converts one insert operation to prepared statements (e.g., the `connect.php` insert). Which would you like next?
+- add a short Docker section to README.md with exact commands and notes (done),
+- convert one example (e.g., the farmer insert in `connect.php`) to use prepared statements and commit it as a proof-of-concept,
+- or both. Tell me which and I will proceed.
